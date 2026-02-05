@@ -11,7 +11,7 @@ export default defineConfig({
     },
   },
   // CRITICAL: Para GitHub Pages
-  base: './',
+  base: '/albin3/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
