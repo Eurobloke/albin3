@@ -1,0 +1,300 @@
+=====================================================
+ALUMINIORD PRO - INSTRUCCIONES COMPLETAS DE INSTALACIÓN
+Backend: Google Apps Script + Google Sheets
+Frontend: React + Vite + GitHub Pages
+=====================================================
+
+═══════════════════════════════════════════════════
+PARTE 1: BACKEND (GOOGLE APPS SCRIPT)
+═══════════════════════════════════════════════════
+
+PASO 1: CREAR GOOGLE SPREADSHEET
+---------------------------------
+1. Ir a https://sheets.google.com
+2. Crear nuevo spreadsheet
+3. Nombrar: "AluminioRD Pro - Base de Datos"
+
+PASO 2: CONFIGURAR APPS SCRIPT
+------------------------------
+1. En el spreadsheet: Extensiones > Apps Script
+2. Borrar código predeterminado
+3. Copiar TODO el código de Code.gs (este directorio)
+4. Pegar en el editor
+5. Guardar (Ctrl+S): Nombre "AluminioRD Backend"
+
+PASO 3: INICIALIZAR BASE DE DATOS
+---------------------------------
+1. Seleccionar función: inicializarHojas
+2. Click en ▶️ Ejecutar
+3. Autorizar permisos:
+   - Click "Revisar permisos"
+   - Seleccionar cuenta Google
+   - "Avanzado" > "Ir a AluminioRD Backend"
+   - "Permitir"
+
+✅ Verificar que se crearon 9 hojas:
+   - Usuarios, Clientes, Cotizaciones, ItemsCotizacion,
+     Pagos, Eventos, Galeria, Configuracion, Precios
+
+PASO 4: DEPLOYAR WEB APP
+------------------------
+1. Click: Implementar > Nueva implementación
+2. Tipo: Aplicación web
+3. Configurar:
+   ✓ Descripción: "AluminioRD API v1"
+   ✓ Ejecutar como: YO (tu email)
+   ✓ Acceso: CUALQUIER PERSONA (Anyone)
+4. Click "Implementar"
+5. ⚠️ COPIAR LA URL (ejemplo):
+   https://script.google.com/macros/s/AKfycbxXXXXXX.../exec
+
+PASO 5: PROBAR BACKEND
+----------------------
+Abrir en navegador (reemplazar con tu URL):
+https://script.google.com/macros/s/TU_ID/exec?action=getStats
+
+Deberías ver JSON con estadísticas.
+
+══════════════════════════════════════════════════
+PARTE 2: FRONTEND (REACT + GITHUB PAGES)
+══════════════════════════════════════════════════
+
+PASO 6: INSTALAR DEPENDENCIAS
+-----------------------------
+cd aluminum-quote-github-pages
+npm install
+
+PASO 7: CONFIGURAR URL DE GAS
+-----------------------------
+1. Copiar archivo ejemplo:
+   cp .env.example .env
+
+2. Editar .env y pegar TU URL:
+   VITE_GAS_URL=https://script.google.com/macros/s/TU_ID/exec
+
+⚠️ CRÍTICO: Esta debe ser la URL del Paso 4
+
+PASO 8: DESARROLLO LOCAL
+------------------------
+npm run dev
+
+App en: http://localhost:3000
+PIN por defecto: 1234
+
+═══════════════════════════════════════════════════
+PARTE 3: DEPLOYMENT A GITHUB PAGES
+═══════════════════════════════════════════════════
+
+OPCIÓN A: DEPLOYMENT AUTOMÁTICO (RECOMENDADO)
+---------------------------------------------
+
+1. Crear repositorio en GitHub:
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin https://github.com/USER/REPO.git
+   git push -u origin main
+
+2. Configurar GitHub Pages:
+   Settings > Pages > Source: GitHub Actions
+
+3. Crear archivo: .github/workflows/deploy.yml
+
+```yaml
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_GAS_URL: ${{ secrets.VITE_GAS_URL }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
+```
+
+4. Agregar secreto con URL de GAS:
+   Settings > Secrets and variables > Actions
+   New repository secret:
+   - Name: VITE_GAS_URL
+   - Secret: https://script.google.com/macros/s/TU_ID/exec
+
+5. Push y ver deployment:
+   git add .
+   git commit -m "Add deployment workflow"
+   git push
+
+6. Ver progreso: Actions tab en GitHub
+
+7. Tu app estará en:
+   https://TU_USUARIO.github.io/TU_REPO/
+
+OPCIÓN B: DEPLOYMENT MANUAL
+---------------------------
+npm run deploy
+
+App en: https://TU_USUARIO.github.io/TU_REPO/
+
+═══════════════════════════════════════════════════
+ESTRUCTURA DE HOJAS (GOOGLE SHEETS)
+═══════════════════════════════════════════════════
+
+1. Usuarios
+   id, nombre, email, telefono, pin_hash, rol, activo, 
+   created_at, last_login
+
+2. Clientes
+   id, tipo_persona, nombre, cedula, rnc, telefono, email,
+   direccion, sector, ciudad, tipo_cliente, notas,
+   total_facturado, created_at, updated_at
+
+3. Cotizaciones
+   id, numero, fecha, fecha_validez, cliente_id, proyecto,
+   estado, subtotal_materiales, instalacion_incluida,
+   instalacion, subtotal_general, descuento_porcentaje,
+   descuento, base_imponible, itbis, total, total_m2,
+   vendedor_id, vendedor, validez_dias, notas,
+   created_at, updated_at
+
+4. ItemsCotizacion
+   id, cotizacion_id, tipo_producto, descripcion,
+   ancho, alto, cantidad, precio_unitario, total,
+   color, vidrio, detalles_json, created_at
+
+5. Pagos
+   id, cotizacion_id, monto, fecha, metodo,
+   referencia, banco, notas, created_at
+
+6. Eventos
+   id, titulo, tipo, fecha, hora_inicio, hora_fin,
+   cotizacion_id, cliente_id, direccion, estado,
+   notas, created_at
+
+7. Galeria
+   id, titulo, descripcion, tipo_trabajo, url,
+   cotizacion_id, fecha, destacado, created_at
+
+8. Configuracion
+   clave, valor, descripcion
+
+9. Precios
+   codigo, descripcion, categoria, unidad, precio, activo
+
+═══════════════════════════════════════════════════
+SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════
+
+❌ ERROR: "CORS blocked"
+------------------------
+Verificar Web App configurado con:
+- Acceso: Cualquier persona (Anyone)
+- Ejecutar como: Yo
+
+❌ ERROR: Los cambios en GAS no se reflejan
+------------------------------------------
+Apps Script > Implementar > Gestionar implementaciones
+Editar implementación activa
+Versión: Nueva versión
+Implementar
+
+❌ ERROR: GitHub Pages muestra 404
+----------------------------------
+1. Verificar base: './' en vite.config.ts
+2. Verificar GitHub Pages habilitado en Settings
+3. Esperar 2-3 minutos después del deployment
+
+❌ ERROR: La app no conecta con GAS
+-----------------------------------
+1. Verificar .env tiene URL correcta
+2. npm run build
+3. F12 > Network > verificar URL
+
+❌ ERROR: "Cannot find module '@/...'"
+-------------------------------------
+Verificar tsconfig.json:
+{
+  "compilerOptions": {
+    "paths": { "@/*": ["./src/*"] }
+  }
+}
+
+═══════════════════════════════════════════════════
+COMANDOS ÚTILES
+═══════════════════════════════════════════════════
+
+npm run dev       # Desarrollo local
+npm run build     # Build de producción
+npm run preview   # Preview del build
+npm run deploy    # Deploy manual a GitHub Pages
+
+═══════════════════════════════════════════════════
+CREDENCIALES INICIALES
+═══════════════════════════════════════════════════
+
+PIN: 1234
+
+⚠️ CAMBIAR INMEDIATAMENTE en producción
+
+═══════════════════════════════════════════════════
+ACTUALIZACIONES DEL BACKEND
+═══════════════════════════════════════════════════
+
+Para actualizar código GAS:
+1. Apps Script > Editar código
+2. Guardar cambios
+3. Implementar > Gestionar implementaciones
+4. Editar implementación activa
+5. Versión: Nueva versión
+6. Implementar
+
+⚠️ CRÍTICO: Sin "nueva versión", los cambios NO se aplican
+
+═══════════════════════════════════════════════════
+ARQUITECTURA DEL SISTEMA
+═══════════════════════════════════════════════════
+
+GitHub Pages (React SPA)
+         ↓
+    HTTPS fetch()
+         ↓
+Google Apps Script (doGet/doPost)
+         ↓
+Google Sheets (Database)
+
+═══════════════════════════════════════════════════
+¡INSTALACIÓN COMPLETADA! 🚀
+═══════════════════════════════════════════════════
+
+Próximos pasos:
+1. ✅ Cambiar PIN por defecto
+2. ✅ Configurar precios
+3. ✅ Personalizar logo
+4. ✅ Agregar primeros clientes
+5. ✅ Crear cotización de prueba
+
+═══════════════════════════════════════════════════
